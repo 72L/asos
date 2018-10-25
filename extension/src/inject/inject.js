@@ -21,17 +21,22 @@ chrome.extension.sendMessage({}, function (response) {
 
             // now do the actual stuff
             defer(function () {
-                alert("jQuery is now loaded");
+                console.log("jQuery is now loaded");
 
                 let $share_bar = $('.gig-share-bar-container');
                 if ($share_bar.length) {
 
-                    let $link_container = $.parseHTML(`
+                    let $link_container = $($.parseHTML(`
                         <div>TEST</div>
-                    `).css({
+                    `));
+
+                    console.log($link_container);
+
+                    $link_container.css({
                         border: '1px solid black',
                         padding: '1rem',
-                        color: 'red'
+                        color: 'red',
+                        'margin-left': '1rem'
                     });
 
                     $share_bar.find('table:first tbody tr:first').append($link_container)
