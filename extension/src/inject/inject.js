@@ -21,33 +21,12 @@
 
                 // now do the actual stuff
                 defer(function() {
-                    console.log("jQuery is now loaded");
+                    //console.log("jQuery is now loaded");
 
-                    let $share_bar = $('.gig-share-bar-container');
-                    if ($share_bar.length) {
-
-                        let $link_container = $($.parseHTML(`
-                        <div>TEST</div>
-                    `));
-
-                        console.log($link_container);
-
-                        $link_container.css({
-                            border: '1px solid black',
-                            padding: '1rem',
-                            color: 'red',
-                            'margin-left': '1rem'
-                        });
-
-                        $share_bar.find('table:first tbody tr:first').append($link_container)
-
-                        console.log($share_bar.find('table:first tbody tr:first'));
-                    }
-
-                    let $aside_action = $('.aside-action');
+                    let $aside_action = $('.aside-action'); // add_to_bag button
                     let $refer_button = $($.parseHTML(`
                         <div>Refer a mate</div>
-                    `));
+                    `)); // refer_button
 
                     $refer_button.css({
                         float: 'left',
@@ -58,18 +37,16 @@
                         'text-decoration': 'underline',
                         cursor: 'pointer',
                         position: 'relative',
-                        //left: '24%',
-                        //transform: 'translate(-50% -50%)',
-                        //'padding': '15px 69px',
-                        //width: '100 %',
-                        //'text-shadow': '00 black',
-                        //'font-weight': 'bold',
-                        //'text-transform': 'uppercase',
-                    });
-                    let $refer_modal = $($.parseHTML(`
-                            <div id="refer-modal"> Share this link! </div>
-                        `));
-                    $refer_modal.css({
+                    }); /* edit refer_button css */
+                    let $popup = $($.parseHTML(`
+                            <div id="popup"> Recommend this to a mate
+                                <input id="popup_input" type = "text" name = "FirstName" value = "www.asos.co.uk" > 
+                                <input id="popup_copy_button" type = "submit" value = "Copy" >
+                            </div>
+                        `)); // popup window
+                    $popup.find('#popup_input').css({}); /* edit css of the input_field in the popup window  */
+                    $popup.find('#popup_copy_button').css({}); /* edit css of the "Copy" button in the popup window  */
+                    $popup.css({
                         width: '260px',
                         padding: '20px 20px',
                         height: '100px',
@@ -78,23 +55,15 @@
                         'background-color': 'white',
                         'box-shadow': '0 3px 12px rgba(27,31,35,0.15)',
                         'margin-top': '15px',
-                    });
-                    $refer_modal.hide();
-                    $refer_button.append($refer_modal);
+                    }); /* edit popup window css */
+                    $popup.hide(); // hide popup window when first created
+                    $refer_button.append($popup); // attach newly created popup window to refer_button
                     $refer_button.click(() => {
-                        //alert("refer button cliked");
-                        console.log("refer button clicked");
-                        console.log($refer_modal);
-
-                        $('#refer-modal').show();
+                        $('#popup').show(); // show popup window when refer_button is clicked
+                    }); // do stuff when clikcing refer_button
 
 
-                    });
-
-
-                    $aside_action.append($refer_button);
-
-
+                    $aside_action.append($refer_button); // attach newly created refer_button to add_to_bag button
                 });
 
                 // save to database
@@ -103,4 +72,3 @@
             }
         }, 10);
     });
-    ``
