@@ -58,7 +58,7 @@
                         'text-decoration': 'underline',
                         cursor: 'pointer',
                         position: 'relative',
-                        left: '24%',
+                        //left: '24%',
                         //transform: 'translate(-50% -50%)',
                         //'padding': '15px 69px',
                         //width: '100 %',
@@ -66,9 +66,31 @@
                         //'font-weight': 'bold',
                         //'text-transform': 'uppercase',
                     });
-                    $refer_button.click(() => {
-                        alert("refer button cliked");
+                    let $refer_modal = $($.parseHTML(`
+                            <div id="refer-modal"> Share this link! </div>
+                        `));
+                    $refer_modal.css({
+                        width: '260px',
+                        padding: '20px 20px',
+                        height: '100px',
+                        position: 'relative',
+                        border: '1px solid rgba(27, 31, 35, 0.15)',
+                        'background-color': 'white',
+                        'box-shadow': '0 3px 12px rgba(27,31,35,0.15)',
+                        'margin-top': '15px',
                     });
+                    $refer_modal.hide();
+                    $refer_button.append($refer_modal);
+                    $refer_button.click(() => {
+                        //alert("refer button cliked");
+                        console.log("refer button clicked");
+                        console.log($refer_modal);
+
+                        $('#refer-modal').show();
+
+
+                    });
+
 
                     $aside_action.append($refer_button);
 
@@ -81,3 +103,4 @@
             }
         }, 10);
     });
+    ``
