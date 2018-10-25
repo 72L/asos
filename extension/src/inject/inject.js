@@ -5,7 +5,8 @@ class FaceManipulator {
         this.api_key = '77c52cc725ea96ceb0eb5ccf39833d84'
 
         // filter img
-        this.flower_src = 'http://pixlab.xyz/images/flower_crown.png'
+        this.flower_src = 'https://ggyr.org/wp-content/uploads/2018/02/PumpkinCluster1.png'
+        this.flower_src = 'https://panthertales.org/wp-content/uploads/2017/11/pumpkin.png';
 
         // proxy url
         this.proxy_url = "https://safe-ridge-86600.herokuapp.com/";
@@ -93,9 +94,7 @@ class FaceManipulator {
         for (let face of faces) {
 
             // Show the face coordinates
-            console.log("Coordinates...")
             let cord = face['rectangle']
-            console.log(cord)
 
             // Show landmarks of interest:
             let landmarks = face['landmarks']
@@ -104,7 +103,7 @@ class FaceManipulator {
             // Resize the flower crown to fit the face width
             $ajaxcalls.push(this._resize_img(
                 this.flower_src,
-                20 + cord['width'], // Face width
+                20 + cord['width'] * 1.50, // Face width
                 0, // Let Pixlab decide the best height for this picture
                 (resized_src) => {
                     // Composite the flower crown on top of the bone most left region.
@@ -157,14 +156,14 @@ class FaceManipulator {
     add_filter($img) {
 
         let img_src = $img[0].src;
-        console.log($img);
-        console.log('working on '+img_src);
+        $img.attr('style', 'border-top: 1px solid gray;');
 
-        this._upload_img($img[0].src, (uploaded_link)=>{
+        this._upload_img(img_src, (uploaded_link)=>{
             this._detect_faces(uploaded_link, (faces) => {
                 this._process_faces(faces, (coordinates) => {
                     this._compose(uploaded_link, coordinates, (transformed_link) => {
                         $img.attr('src', transformed_link)
+                        $img.attr('style', 'border-top: none;');
                     })
                 })
             })
