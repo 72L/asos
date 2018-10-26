@@ -1,5 +1,20 @@
 var hats = [
     {
+        "src": "https://imageshack.com/a/img922/9351/OT1rh9.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img924/335/W28r2z.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img923/729/92UZ73.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img922/6954/qkHr5Z.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img923/7959/NQFrPT.png"
+    },
+    {
         "src": "https://imageshack.com/a/img924/7744/QsmSgl.png"
     },
     {
@@ -64,7 +79,10 @@ class FaceManipulator {
         }
 
         // build hat list
-        this._build_hat_list()
+        this._build_hat_list();
+
+        // trigger first hat
+        $('.select_hat_div:first').click();
     }
 
     add_all_filters(hat_src, hat_height, hat_width) {
@@ -98,7 +116,7 @@ class FaceManipulator {
         $hat_selector.append($hat_inst_div);
 
         for (let hat of hats) {
-            let $hat_option_div = $('<div>');
+            let $hat_option_div = $('<div class="select_hat_div">');
             $hat_option_div.css({
                 padding: '10px',
                 background: '#6666662e',
@@ -109,7 +127,6 @@ class FaceManipulator {
             hat.$hat_img = $hat_img
             $hat_option_div.append($hat_img)
             $hat_option_div.click(() => {
-                console.log($hat_img[0].clientHeight);
                 this.add_all_filters(hat.src, $hat_img[0].clientHeight, $hat_img[0].clientWidth)
             })
             $hat_selector.append($hat_option_div)
@@ -117,7 +134,6 @@ class FaceManipulator {
         }
 
         $('.product-carousel .window').append($hat_selector)
-        console.log(hats);
 
     }
 
