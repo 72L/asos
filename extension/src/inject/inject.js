@@ -1,7 +1,184 @@
-    chrome.extension.sendMessage({}, function(response) {
-        var readyStateCheckInterval = setInterval(function() {
-            if (document.readyState === "complete") {
-                clearInterval(readyStateCheckInterval);
+
+class FaceManipulator {
+    constructor() {
+
+        // PixLab API key
+        this.api_key = '77c52cc725ea96ceb0eb5ccf39833d84'
+
+        // filter img
+        this.flower_src = 'https://ggyr.org/wp-content/uploads/2018/02/PumpkinCluster1.png'
+        this.flower_src = 'https://panthertales.org/wp-content/uploads/2017/11/pumpkin.png';
+
+        // proxy url
+        this.proxy_url = "https://safe-ridge-86600.herokuapp.com/";
+
+        // imageshak api key
+        this.imageshack_api_key = '26HKSUVW2e2902e5954c6d3221c044fc34d18532'
+    }
+
+    _upload_img(src, callback){
+
+
+        $.ajax({
+            url: `${this.proxy_url}https://api.imageshack.com/v2/images`,
+            type: 'POST',
+            cache: false,
+            data: {
+                urls: [src],
+                api_key: this.imageshack_api_key
+            },
+            dataType: 'json',
+            error: function () {
+                return true;
+            },
+            success: function (data) {
+                let direct_link = `https://${data.result.images[0].direct_link}`;
+                console.log(direct_link);
+                callback(direct_link)
+            }
+        });
+
+    }
+
+    _resize_img(img, width, height, callback) {
+        console.log("Resizing images...");
+
+        return $.ajax({
+            url: `${this.proxy_url}https://api.pixlab.io/smartresize`,
+            type: 'GET',
+            cache: false,
+            data: {
+                'img': img,
+                'key': this.api_key,
+                'width': width,
+                'height': height
+            },
+            dataType: 'json',
+            error: function () {
+                return true;
+            },
+            success: function (data) {
+                callback(data.link)
+            }
+        });
+    }
+
+    _detect_faces(img, callback) {
+
+        console.log('detecting faces...')
+
+        $.ajax({
+            url: `${this.proxy_url}https://api.pixlab.io/facelandmarks`,
+            type: 'GET',
+            cache: false,
+            data: {
+                'img': img,
+                'key': this.api_key,
+            },
+            dataType: 'json',
+            error: function () {
+                return true;
+            },
+            success: function (data) {
+                console.log(`${data.faces.length} faces were detected`);
+                callback(data.faces)
+            }
+        });
+
+    }
+
+    _process_faces(faces, callback) {
+        // This list contain all the coordinates of the regions where the flower crown or the dog parts should be
+        // Composited on top of the target image later using the `merge` command.
+        let coordinates = [], $ajaxcalls = [];
+
+        for (let face of faces) {
+
+            // Show the face coordinates
+            let cord = face['rectangle']
+
+            // Show landmarks of interest:
+            let landmarks = face['landmarks']
+            console.log(face['landmarks'])
+
+            // Resize the flower crown to fit the face width
+            $ajaxcalls.push(this._resize_img(
+                this.flower_src,
+                20 + cord['width'] * 1.50, // Face width
+                0, // Let Pixlab decide the best height for this picture
+                (resized_src) => {
+                    // Composite the flower crown on top of the bone most left region.
+                    coordinates.push({
+                        'img': resized_src,
+                        'x': landmarks['bone']['outer_left']['x'],
+                        'y': landmarks['bone']['outer_left']['y']
+                    })
+                }
+            ))
+
+        }
+
+        // this will setup the promise ---
+        // what will run when all 28 AJAX calls complete
+        $.when.apply(null, $ajaxcalls).then(function () {
+            callback(coordinates)
+        });
+
+    }
+
+    _compose(base_img_src, coordinates, callback) {
+
+        let payload_data = {
+            'src': base_img_src,
+            'key': this.api_key,
+            'cord': coordinates
+        }
+
+        // Finally, Perform the composite operation
+        console.log("Composite operation...")
+        console.log(payload_data);
+
+        $.ajax({
+            url: `${this.proxy_url}https://api.pixlab.io/merge`,
+            type: 'POST',
+            data: JSON.stringify(payload_data),
+            dataType: 'json',
+            contentType: 'application/json',
+            error: function () {
+                return true;
+            },
+            success: function (reply) {
+                callback(reply.ssl_link)
+            }
+        });
+
+    }
+
+    add_filter($img) {
+
+        let img_src = $img[0].src;
+        $img.attr('style', 'border-top: 1px solid gray;');
+
+        this._upload_img(img_src, (uploaded_link)=>{
+            this._detect_faces(uploaded_link, (faces) => {
+                this._process_faces(faces, (coordinates) => {
+                    this._compose(uploaded_link, coordinates, (transformed_link) => {
+                        $img.attr('src', transformed_link)
+                        $img.attr('style', 'border-top: none;');
+                    })
+                })
+            })
+        })
+
+    }
+}
+
+fm = new FaceManipulator();
+
+chrome.extension.sendMessage({}, function (response) {
+    var readyStateCheckInterval = setInterval(function () {
+        if (document.readyState === "complete") {
+            clearInterval(readyStateCheckInterval)
 
                 // ----------------------------------------------------------
                 // This part of the script triggers when page is done loading
