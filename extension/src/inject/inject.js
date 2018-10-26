@@ -1,49 +1,24 @@
 var hats = [
     {
-        "src": "https://imageshack.com/a/img922/9351/OT1rh9.png"
-    },
-    {
+        'name': 'pumpkins',
         "src": "https://imageshack.com/a/img924/335/W28r2z.png"
     },
     {
-        "src": "https://imageshack.com/a/img923/729/92UZ73.png"
+        'name': 'turkey',
+        "src": "https://imageshack.com/a/img924/5549/WtArln.png"
     },
     {
+        'name': 'christmas',
+        "src": "https://imageshack.com/a/img921/930/OuFeAc.png"
+    },
+    {
+        'name': 'valentines',
         "src": "https://imageshack.com/a/img922/6954/qkHr5Z.png"
     },
     {
-        "src": "https://imageshack.com/a/img923/7959/NQFrPT.png"
+        'name': 'clovers',
+        "src": "https://imageshack.com/a/img922/5249/ZKF5wl.png"
     },
-    {
-        "src": "https://imageshack.com/a/img924/7744/QsmSgl.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img921/4472/bZ2Frn.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img924/8503/gkNzvu.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img924/6651/JyKQJd.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img923/6226/kZJBGv.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img924/8254/hWxpsd.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img922/296/6ojTLG.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img923/2356/UMggwO.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img921/8770/FKaiM9.png"
-    },
-    {
-        "src": "https://imageshack.com/a/img923/8733/3YCJKR.png"
-    }
 ]
 
 class FaceManipulator {
@@ -102,18 +77,6 @@ class FaceManipulator {
             bottom: '0',
             margin: '2px',
         })
-
-        let $hat_inst_div = $('<div>');
-        $hat_inst_div.css({
-            padding: '10px',
-            background: '#eee',
-            margin: '1px',
-            color: 'black'
-        }).html(
-            'Select a hat:'
-        )
-
-        $hat_selector.append($hat_inst_div);
 
         for (let hat of hats) {
             let $hat_option_div = $('<div class="select_hat_div">');
@@ -256,7 +219,7 @@ class FaceManipulator {
                 0, // Let Pixlab decide the best height for this picture
                 (resized_src) => {
                     let adj_mult = new_width / hat_width,
-                        adjustment = (hat_height > 40) ? hat_height * 0.5 * adj_mult : 0;
+                        adjustment = (hat_height) ? hat_height * 0.5 * adj_mult : 0;
                     coordinates.push({
                         'img': resized_src,
                         'x': landmarks['bone']['outer_left']['x'],
@@ -403,6 +366,10 @@ chrome.extension.sendMessage({}, function (response) {
                         'font-family': 'futura-pt-n7, futura-pt, Tahoma, Geneva, Verdana, Arial, sans-serif',
                         'font-weight': 'bold',
                         'text-transform': 'uppercase',
+                        border: 'none',
+                        padding: '2px 8px',
+                        background: '#eee',
+                        cursor: 'pointer',
                     });
                     /* edit css of the "facebook_share" button in the popup window  */
                     $popup.find('#facebook_share').css({
@@ -445,15 +412,25 @@ chrome.extension.sendMessage({}, function (response) {
                     $refer_button.click(() => {
                         $('#popup').show(); // toggle popup window ON & OFF
                     });
-                    /* do stuff when clicking popup_copy_button */
-                    $popup.find('#popup_copy_button').click(() => {
-                        console.log("popup_copy button pressed");
-                    });
 
                     $aside_action.append($refer_button); // attach newly created refer_button to add_to_bag button
                 });
 
-                // NEXT STEP: save to database
+                /* do stuff when clicking popup_copy_button */
+                $('#popup_copy_button').click((e) => {
+                    console.log("popup_copy button pressed");
+
+                    /* Get the text field */
+                      let copyText = $('#popup_input')[0];
+
+                      /* Select the text field */
+                      copyText.select();
+
+                      /* Copy the text inside the text field */
+                      document.execCommand("copy");
+
+                });
+
             }
         }, 10);
     })
