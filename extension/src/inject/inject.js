@@ -1,3 +1,36 @@
+var hats = [
+    {
+        "src": "https://imageshack.com/a/img924/7744/QsmSgl.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img921/4472/bZ2Frn.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img924/8503/gkNzvu.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img924/6651/JyKQJd.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img923/6226/kZJBGv.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img924/8254/hWxpsd.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img922/296/6ojTLG.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img923/2356/UMggwO.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img921/8770/FKaiM9.png"
+    },
+    {
+        "src": "https://imageshack.com/a/img923/8733/3YCJKR.png"
+    }
+]
+
 class FaceManipulator {
     constructor() {
 
@@ -13,10 +46,89 @@ class FaceManipulator {
 
         // imageshak api key
         this.imageshack_api_key = '26HKSUVW2e2902e5954c6d3221c044fc34d18532'
+
+        this.main_window_selector = '.product-carousel .window';
+
+        // save OG image list
+        this.og_img_list = []
+        $('.amp-images img').each((i, item) => {
+            this.og_img_list.push({
+                '$item': $(item),
+                'src': item.src
+            })
+        })
+
+        this.api_result_cache = {
+            upload: {},
+            faces: {}
+        }
+
+        // build hat list
+        this._build_hat_list()
     }
 
-    _upload_img(src, callback){
+    add_all_filters(hat_src, hat_height, hat_width) {
+        this.og_img_list.map((item) => {
+            this.add_filter(item.$item, item.src, hat_src, hat_height, hat_width);
+        })
+    }
 
+    _build_hat_list() {
+
+        let $hat_selector = $('<div>');
+        $hat_selector.css({
+            position: 'absolute',
+            'z-index': 10000,
+            'overflow-y': 'scroll',
+            'max-height': '300px',
+            bottom: '0',
+            margin: '2px',
+        })
+
+        let $hat_inst_div = $('<div>');
+        $hat_inst_div.css({
+            padding: '10px',
+            background: '#eee',
+            margin: '1px',
+            color: 'black'
+        }).html(
+            'Select a hat:'
+        )
+
+        $hat_selector.append($hat_inst_div);
+
+        for (let hat of hats) {
+            let $hat_option_div = $('<div>');
+            $hat_option_div.css({
+                padding: '10px',
+                background: '#6666662e',
+                margin: '1px',
+                cursor: 'pointer'
+            })
+            let $hat_img = $(`<img src="${hat.src}" width="100px" class="hat_img">`)
+            hat.$hat_img = $hat_img
+            $hat_option_div.append($hat_img)
+            $hat_option_div.click(() => {
+                console.log($hat_img[0].clientHeight);
+                this.add_all_filters(hat.src, $hat_img[0].clientHeight, $hat_img[0].clientWidth)
+            })
+            $hat_selector.append($hat_option_div)
+
+        }
+
+        $('.product-carousel .window').append($hat_selector)
+        console.log(hats);
+
+    }
+
+    _upload_img(src, callback) {
+
+        console.log('uploading...')
+        // check cache
+        if (src in this.api_result_cache.upload) {
+            console.log('got from cache')
+            return callback(this.api_result_cache.upload[src]);
+        }
 
         $.ajax({
             url: `${this.proxy_url}https://api.imageshack.com/v2/images`,
@@ -30,13 +142,26 @@ class FaceManipulator {
             error: function () {
                 return true;
             },
-            success: function (data) {
+            success: (data) => {
                 let direct_link = `https://${data.result.images[0].direct_link}`;
                 console.log(direct_link);
+
+                // save to cache
+                this.api_result_cache.upload[src] = direct_link;
                 callback(direct_link)
             }
         });
 
+    }
+
+    _get_img_height(imgSrc, callback) {
+        let newImg = new Image();
+
+        newImg.onload = function () {
+            callback(height);
+        }
+
+        newImg.src = imgSrc; // this must be done AFTER setting onload
     }
 
     _resize_img(img, width, height, callback) {
@@ -65,6 +190,11 @@ class FaceManipulator {
     _detect_faces(img, callback) {
 
         console.log('detecting faces...')
+        // check cache
+        if (img in this.api_result_cache.faces) {
+            console.log('got from cache')
+            return callback(this.api_result_cache.faces[img]);
+        }
 
         $.ajax({
             url: `${this.proxy_url}https://api.pixlab.io/facelandmarks`,
@@ -78,15 +208,16 @@ class FaceManipulator {
             error: function () {
                 return true;
             },
-            success: function (data) {
+            success: (data) => {
                 console.log(`${data.faces.length} faces were detected`);
                 callback(data.faces)
+                this.api_result_cache.faces[img] = data.faces;
             }
         });
 
     }
 
-    _process_faces(faces, callback) {
+    _process_faces(faces, hat_src, hat_height, hat_width, callback) {
         // This list contain all the coordinates of the regions where the flower crown or the dog parts should be
         // Composited on top of the target image later using the `merge` command.
         let coordinates = [], $ajaxcalls = [];
@@ -100,17 +231,20 @@ class FaceManipulator {
             let landmarks = face['landmarks']
             console.log(face['landmarks'])
 
+            let new_width = cord['width'] * 1.5;
+
             // Resize the flower crown to fit the face width
             $ajaxcalls.push(this._resize_img(
-                this.flower_src,
-                20 + cord['width'] * 1.50, // Face width
+                hat_src,
+                new_width, // Face width
                 0, // Let Pixlab decide the best height for this picture
                 (resized_src) => {
-                    // Composite the flower crown on top of the bone most left region.
+                    let adj_mult = new_width / hat_width,
+                        adjustment = (hat_height > 40) ? hat_height * 0.5 * adj_mult : 0;
                     coordinates.push({
                         'img': resized_src,
                         'x': landmarks['bone']['outer_left']['x'],
-                        'y': landmarks['bone']['outer_left']['y']
+                        'y': landmarks['bone']['outer_left']['y'] - adjustment,
                     })
                 }
             ))
@@ -153,14 +287,13 @@ class FaceManipulator {
 
     }
 
-    add_filter($img) {
+    add_filter($img, og_src, hat_src, hat_height, hat_width) {
 
-        let img_src = $img[0].src;
-        $img.attr('style', 'border-top: 1px solid gray;');
+        $img.attr('style', 'border-top: 3px solid red;');
 
-        this._upload_img(img_src, (uploaded_link)=>{
+        this._upload_img(og_src, (uploaded_link) => {
             this._detect_faces(uploaded_link, (faces) => {
-                this._process_faces(faces, (coordinates) => {
+                this._process_faces(faces, hat_src, hat_height, hat_width, (coordinates) => {
                     this._compose(uploaded_link, coordinates, (transformed_link) => {
                         $img.attr('src', transformed_link)
                         $img.attr('style', 'border-top: none;');
@@ -171,8 +304,6 @@ class FaceManipulator {
 
     }
 }
-
-fm = new FaceManipulator();
 
 chrome.extension.sendMessage({}, function (response) {
     var readyStateCheckInterval = setInterval(function () {
@@ -197,12 +328,8 @@ chrome.extension.sendMessage({}, function (response) {
 
             // now do the actual stuff
             defer(function () {
+                fm = new FaceManipulator();
                 console.log("jQuery is now loaded");
-
-                $('.amp-images img').each((i, item)=>{
-                    console.log(item)
-                    fm.add_filter($(item));
-                })
 
                 let $share_bar = $('.gig-share-bar-container');
                 if ($share_bar.length) {
